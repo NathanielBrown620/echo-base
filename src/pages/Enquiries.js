@@ -29,12 +29,12 @@ function Enquiries() {
   }
 
   const statusColour = (status) => {
-    if (status === 'Awarded') return '#22c55e'
-    if (status === 'Quoted') return '#38bdf8'
-    if (status === 'Estimating') return '#f59e0b'
-    if (status === 'Lost') return '#ef4444'
-    if (status === 'On Hold') return '#6b7280'
-    return '#a855f7'
+    if (status === 'Awarded') return { bg: '#166534', text: '#86efac' }
+    if (status === 'Quoted') return { bg: '#1e3a5f', text: '#93c5fd' }
+    if (status === 'Estimating') return { bg: '#78350f', text: '#fcd34d' }
+    if (status === 'Lost') return { bg: '#7f1d1d', text: '#fca5a5' }
+    if (status === 'On Hold') return { bg: '#374151', text: '#9ca3af' }
+    return { bg: '#4c1d95', text: '#c4b5fd' }
   }
 
   const input = { width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #334155', backgroundColor: '#0f172a', color: 'white', marginTop: '0.3rem', boxSizing: 'border-box' }
@@ -78,33 +78,49 @@ function Enquiries() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ backgroundColor: '#0f172a', color: '#94a3b8', fontSize: '0.85rem' }}>
-              {['Client', 'Description', 'Value', 'Status', 'Assigned To', 'Received', 'Quote Due'].map(h => (
-                <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>{h}</th>
-              ))}
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Client</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Description</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Value</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Status</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Assigned To</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Received</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Quote Due</th>
+              <th style={{ padding: '0.75rem 1rem', textAlign: 'left' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {enquiries.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
+                <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
                   No enquiries yet — click + New Enquiry to add one
                 </td>
               </tr>
             ) : (
-              enquiries.map((e) => (
-                <tr key={e.id} style={{ borderTop: '1px solid #0f172a', cursor: 'pointer' }}
-                  onClick={() => window.location.href = `/enquiry/${e.id}`}>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>{e.client_name}</td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#94a3b8', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description}</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>£{Number(e.estimated_value).toLocaleString()}</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    <span style={{ backgroundColor: statusColour(e.status), color: 'white', padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.8rem' }}>{e.status}</span>
-                  </td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#94a3b8' }}>{e.assigned_to}</td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#94a3b8' }}>{e.date_received}</td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#94a3b8' }}>{e.quote_due_date}</td>
-                </tr>
-              ))
+              enquiries.map((e) => {
+                const sc = statusColour(e.status)
+                return (
+                  <tr key={e.id} style={{ borderTop: '1px solid #0f172a' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>{e.client_name}</td>
+                    <td style={{ padding: '0.75rem 1rem', color: '#94a3b8', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description}</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>£{Number(e.estimated_value).toLocaleString()}</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      <span style={{ backgroundColor: sc.bg, color: sc.text, padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.8rem' }}>{e.status}</span>
+                    </td>
+                    <td style={{ padding: '0.75rem 1rem', color: '#94a3b8' }}>{e.assigned_to}</td>
+                    <td style={{ padding: '0.75rem 1rem', color: '#94a3b8' }}>{e.date_received}</td>
+                    <td style={{ padding: '0.75rem 1rem', color: '#94a3b8' }}>{e.quote_due_date}</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => window.location.href = `/cost/${e.id}`}
+                          style={{ backgroundColor: '#1e3a5f', color: '#93c5fd', border: '1px solid #1e40af', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>
+                          Cost Model
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>

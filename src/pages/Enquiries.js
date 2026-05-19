@@ -11,19 +11,13 @@ function Enquiries() {
   })
 
   useEffect(() => {
-  async function load() {
-    const { data, error } = await supabase.from('enquiries').select('*').eq('id', id).single()
-    if (error) console.error(error)
-    else { setEnquiry(data); setForm(data) }
-  }
-  load()
-}, [id])
-
-  async function fetchEnquiries() {
-    const { data, error } = await supabase.from('enquiries').select('*').order('created_at', { ascending: false })
-    if (error) console.error(error)
-    else setEnquiries(data)
-  }
+    async function load() {
+      const { data, error } = await supabase.from('enquiries').select('*').order('created_at', { ascending: false })
+      if (error) console.error(error)
+      else setEnquiries(data)
+    }
+    load()
+  }, [])
 
   async function addEnquiry() {
     const { error } = await supabase.from('enquiries').insert([form])
@@ -31,7 +25,8 @@ function Enquiries() {
     else {
       setShowForm(false)
       setForm({ client_name: '', contact_name: '', contact_email: '', contact_phone: '', description: '', estimated_value: '', status: 'Enquiry', assigned_to: '', date_received: '', quote_due_date: '', assumptions: '', exclusions: '' })
-      fetchEnquiries()
+      const { data } = await supabase.from('enquiries').select('*').order('created_at', { ascending: false })
+      if (data) setEnquiries(data)
     }
   }
 
@@ -106,7 +101,7 @@ function Enquiries() {
               enquiries.map((e) => {
                 const sc = statusColour(e.status)
                 return (
-                  <tr key={e.id} style={{ borderTop: '1px solid #0f172a' }}>
+                  <tr key={e.id} onClick={() => window.location.href = `/enquiry/${e.id}`} style={{ borderTop: '1px solid #0f172a', cursor: 'pointer' }}>
                     <td style={{ padding: '0.75rem 1rem', fontWeight: 'bold' }}>{e.client_name}</td>
                     <td style={{ padding: '0.75rem 1rem', color: '#94a3b8', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description}</td>
                     <td style={{ padding: '0.75rem 1rem' }}>£{Number(e.estimated_value).toLocaleString()}</td>
@@ -118,7 +113,7 @@ function Enquiries() {
                     <td style={{ padding: '0.75rem 1rem', color: '#94a3b8' }}>{e.quote_due_date}</td>
                     <td style={{ padding: '0.75rem 1rem' }}>
                       <button
-                        onClick={() => window.location.href = `/cost/${e.id}`}
+                        onClick={ev => { ev.stopPropagation(); window.location.href = `/cost/${e.id}` }}
                         style={{ backgroundColor: '#1e3a5f', color: '#93c5fd', border: '1px solid #1e40af', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>
                         Cost Model
                       </button>

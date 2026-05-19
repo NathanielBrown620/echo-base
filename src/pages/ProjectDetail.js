@@ -5,7 +5,7 @@ function ProjectDetail() {
   const [project, setProject] = useState(null)
   const id = window.location.pathname.split('/').pop()
 
-  useEffect(() => { fetchProject() }, [])
+  useEffect(() => { fetchProject() }, [id])
 
   async function fetchProject() {
     const { data, error } = await supabase.from('projects').select('*').eq('id', id).single()

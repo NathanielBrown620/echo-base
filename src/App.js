@@ -12,7 +12,6 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/project/:id" element={<ProjectDetail />} />
         <Route path="/enquiries" element={<Enquiries />} />
-        <Route path="/enquiry/:id" element={<Enquiries />} />
         <Route path="/cost/:id" element={<CostSheet />} />
       </Routes>
     </Router>

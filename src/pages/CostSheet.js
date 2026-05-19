@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 
 const LABOUR_GRADES = [
@@ -61,7 +61,14 @@ function CostSheet() {
   const [gpPct, setGpPct] = useState(35)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => { fetchLineItems() }, [enquiryId])
+  useEffect(() => {
+  async function load() {
+    const { data } = await supabase.from('cost_line_items').select('*').eq('enquiry_id', enquiryId).order('created_at')
+    if (data) setLineItems(data)
+    if (data && data.length > 0) loadLineItem(data[0])
+  }
+  load()
+}, [enquiryId])
 
   async function fetchLineItems() {
     const { data } = await supabase.from('cost_line_items').select('*').eq('enquiry_id', enquiryId).order('created_at')

@@ -5,13 +5,14 @@ function ProjectDetail() {
   const [project, setProject] = useState(null)
   const id = window.location.pathname.split('/').pop()
 
-  useEffect(() => { fetchProject() }, [id])
-
-  async function fetchProject() {
-    const { data, error } = await supabase.from('projects').select('*').eq('id', id).single()
-    if (error) console.error(error)
-    else setProject(data)
-  }
+ useEffect(() => {
+    async function fetchProject() {
+      const { data, error } = await supabase.from('projects').select('*').eq('id', id).single()
+      if (error) console.error(error)
+      else setProject(data)
+    }
+    fetchProject()
+  }, [id])
 
   if (!project) return <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: 'white', padding: '2rem' }}>Loading...</div>
 

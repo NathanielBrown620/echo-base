@@ -41,7 +41,12 @@ function Dashboard() {
   return (
     <div style={{ fontFamily: 'sans-serif', padding: '2rem', backgroundColor: '#0f172a', minHeight: '100vh', color: 'white' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#38bdf8' }}>EchoBase</h1>
+       <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+  <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#38bdf8', margin: 0 }}>EchoBase</h1>
+  <button onClick={() => window.location.href = '/enquiries'} style={{ backgroundColor: 'transparent', color: '#94a3b8', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>
+    Enquiries
+  </button>
+</div>
         <button onClick={() => setShowForm(true)} style={{ backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', padding: '0.5rem 1.2rem', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
           + New Project
         </button>

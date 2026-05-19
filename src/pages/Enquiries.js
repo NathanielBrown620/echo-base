@@ -10,7 +10,14 @@ function Enquiries() {
     date_received: '', quote_due_date: '', assumptions: '', exclusions: ''
   })
 
-  useEffect(() => { fetchEnquiries() }, [])
+  useEffect(() => {
+  async function load() {
+    const { data, error } = await supabase.from('enquiries').select('*').eq('id', id).single()
+    if (error) console.error(error)
+    else { setEnquiry(data); setForm(data) }
+  }
+  load()
+}, [id])
 
   async function fetchEnquiries() {
     const { data, error } = await supabase.from('enquiries').select('*').order('created_at', { ascending: false })

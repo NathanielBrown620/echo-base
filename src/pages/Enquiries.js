@@ -110,13 +110,11 @@ function Enquiries() {
                     <td style={{ padding: '0.75rem 1rem', color: '#94a3b8' }}>{e.date_received}</td>
                     <td style={{ padding: '0.75rem 1rem', color: '#94a3b8' }}>{e.quote_due_date}</td>
                     <td style={{ padding: '0.75rem 1rem' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          onClick={() => window.location.href = `/cost/${e.id}`}
-                          style={{ backgroundColor: '#1e3a5f', color: '#93c5fd', border: '1px solid #1e40af', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>
-                          Cost Model
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => window.location.href = `/cost/${e.id}`}
+                        style={{ backgroundColor: '#1e3a5f', color: '#93c5fd', border: '1px solid #1e40af', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>
+                        Cost Model
+                      </button>
                     </td>
                   </tr>
                 )

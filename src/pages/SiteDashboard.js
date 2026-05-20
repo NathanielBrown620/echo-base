@@ -9,7 +9,7 @@ import EnquiryDetail from './pages/EnquiryDetail'
 import CostSheet from './pages/CostSheet'
 import Login from './pages/Login'
 import Users from './pages/Users'
-import { getUser, canAccess } from '../auth'
+import { getUser, canAccess } from './auth'
 
 function ProtectedRoute({ children, section }) {
   const user = getUser()

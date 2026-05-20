@@ -1,3 +1,5 @@
+import React from 'react'
+
 export const ECHO_BLUE = '#29ABE2'
 export const ECHO_BLUE_DARK = '#1a8fc4'
 export const ECHO_BLUE_LIGHT = '#e8f6fd'

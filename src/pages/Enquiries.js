@@ -138,9 +138,7 @@ function Enquiries() {
             <input style={input} value={form.contact_phone} onChange={e => setForm({...form, contact_phone: e.target.value})} />
             <label style={label}>Description of Works</label>
             <textarea style={{...input, height: '80px', resize: 'vertical'}} value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
-            <label style={label}>Estimated Value (£)</label>
-            <input style={input} type="number" value={form.estimated_value} onChange={e => setForm({...form, estimated_value: e.target.value})} />
-            <label style={label}>Status</label>
+      
             <select style={input} value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
               <option>Enquiry</option>
               <option>Estimating</option>

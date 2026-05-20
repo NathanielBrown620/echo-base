@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 
 function EnquiryDetail() {
   const [enquiry, setEnquiry] = useState(null)
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({})
-  const id = window.location.pathname.split('/').pop()
+  const { id } = useParams()
 
   useEffect(() => { fetchEnquiry() }, [id])
 

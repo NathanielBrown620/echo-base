@@ -15,48 +15,39 @@ function ProjectChat() {
   const user = getUser()
 
   useEffect(() => {
-    loadProject()
-    loadMessages()
-    markAsRead()
+    async function init() {
+      const { data: proj } = await supabase.from('projects').select('*').eq('id', projectId).single()
+      if (proj) setProject(proj)
+
+      const { data: msgs } = await supabase.from('project_messages').select('*').eq('project_id', projectId).order('created_at', { ascending: true })
+      if (msgs) setMessages(msgs)
+
+      await supabase.from('message_reads').upsert({
+        user_id: user.id,
+        project_id: projectId,
+        last_read: new Date().toISOString()
+      }, { onConflict: 'user_id,project_id' })
+    }
+    init()
 
     const channel = supabase
-      .channel('project-messages')
+      .channel(`project-messages-${projectId}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'project_messages',
         filter: `project_id=eq.${projectId}`
-      }, () => { loadMessages(); markAsRead() })
+      }, (payload) => {
+        setMessages(prev => [...prev, payload.new])
+      })
       .subscribe()
 
     return () => supabase.removeChannel(channel)
-  }, [projectId])
+  }, [projectId, user.id])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  async function loadProject() {
-    const { data } = await supabase.from('projects').select('*').eq('id', projectId).single()
-    if (data) setProject(data)
-  }
-
-  async function loadMessages() {
-    const { data } = await supabase
-      .from('project_messages')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: true })
-    if (data) setMessages(data)
-  }
-
-  async function markAsRead() {
-    await supabase.from('message_reads').upsert({
-      user_id: user.id,
-      project_id: projectId,
-      last_read: new Date().toISOString()
-    }, { onConflict: 'user_id,project_id' })
-  }
 
   async function sendMessage() {
     if (!newMessage.trim()) return
@@ -88,7 +79,6 @@ function ProjectChat() {
   }
 
   const getInitials = (name) => name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '??'
-
   const avatarColours = ['#29ABE2', '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#ef4444']
   const getAvatarColour = (name) => avatarColours[(name?.charCodeAt(0) || 0) % avatarColours.length]
 

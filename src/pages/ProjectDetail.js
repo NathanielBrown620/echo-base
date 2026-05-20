@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
-import { Nav, pageStyle, cardStyle, tableStyle, btnStyle, badge, colors } from '../theme'
+import { Nav, pageStyle, cardStyle, btnStyle, badge, colors } from '../theme'
+import { getUser, canAccess } from '../auth'
 
 function ProjectDetail() {
   const [project, setProject] = useState(null)
   const { id } = useParams()
+  const user = getUser()
+  const canSeeCommercial = canAccess(user, 'commercial')
+  const isSiteDelivery = user?.roles?.every(r => r === 'site_delivery')
 
   useEffect(() => {
     async function load() {
@@ -23,7 +27,9 @@ function ProjectDetail() {
     return '#94a3b8'
   }
 
-  const sections = ['Sales Handover', 'Commercial', 'Project Management', 'Engineering', 'Procurement', 'HSEQ', 'Change Control', 'Handover']
+  const allSections = ['Sales Handover', 'Commercial', 'Project Management', 'Engineering', 'Procurement', 'HSEQ', 'Change Control', 'Handover']
+  const siteSections = ['HSEQ', 'Handover', 'Project Management']
+  const sections = isSiteDelivery ? siteSections : allSections
 
   if (!project) return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", backgroundColor: colors.bg, minHeight: '100vh' }}>
@@ -49,21 +55,31 @@ function ProjectDetail() {
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <span style={{ backgroundColor: ragColour(project.rag_status), borderRadius: '50%', display: 'inline-block', width: '12px', height: '12px' }}></span>
             <span style={badge(project.stage)}>{project.stage}</span>
+            <button onClick={() => window.location.href = `/project/${project.id}/chat`} style={{ ...btnStyle.primary, marginLeft: '0.5rem' }}>
+              💬 Project Chat
+            </button>
           </div>
         </div>
 
-        <div style={{ ...cardStyle.statGrid, marginBottom: '1.5rem' }}>
-          {[
-            { label: 'Contract Value', value: `£${Number(project.value || 0).toLocaleString()}` },
-            { label: 'Project Manager', value: project.project_manager || '—' },
-            { label: 'Start Date', value: project.start_date || '—' },
-            { label: 'Completion Date', value: project.end_date || '—' },
-          ].map((stat) => (
-            <div key={stat.label} style={cardStyle.card}>
-              <div style={cardStyle.statLabel}>{stat.label}</div>
-              <div style={{ fontSize: '15px', fontWeight: '600', color: '#1a2332', marginTop: '2px' }}>{stat.value}</div>
+        <div style={{ ...cardStyle.statGrid, gridTemplateColumns: canSeeCommercial ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)', marginBottom: '1.5rem' }}>
+          {canSeeCommercial && (
+            <div style={cardStyle.card}>
+              <div style={cardStyle.statLabel}>Contract Value</div>
+              <div style={{ fontSize: '15px', fontWeight: '600', color: '#1a2332', marginTop: '2px' }}>£{Number(project.value || 0).toLocaleString()}</div>
             </div>
-          ))}
+          )}
+          <div style={cardStyle.card}>
+            <div style={cardStyle.statLabel}>Project Manager</div>
+            <div style={{ fontSize: '15px', fontWeight: '600', color: '#1a2332', marginTop: '2px' }}>{project.project_manager || '—'}</div>
+          </div>
+          <div style={cardStyle.card}>
+            <div style={cardStyle.statLabel}>Start Date</div>
+            <div style={{ fontSize: '15px', fontWeight: '600', color: '#1a2332', marginTop: '2px' }}>{project.start_date || '—'}</div>
+          </div>
+          <div style={cardStyle.card}>
+            <div style={cardStyle.statLabel}>Completion Date</div>
+            <div style={{ fontSize: '15px', fontWeight: '600', color: '#1a2332', marginTop: '2px' }}>{project.end_date || '—'}</div>
+          </div>
         </div>
 
         {project.description && (
@@ -76,7 +92,7 @@ function ProjectDetail() {
         <div style={{ fontSize: '13px', fontWeight: '600', color: '#64748b', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Project Sections</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
           {sections.map((section) => (
-            <div key={section} style={{ ...cardStyle.card, cursor: 'pointer', transition: 'border-color 0.15s' }}
+            <div key={section} style={{ ...cardStyle.card, cursor: 'pointer' }}
               onMouseOver={e => e.currentTarget.style.borderColor = '#29ABE2'}
               onMouseOut={e => e.currentTarget.style.borderColor = '#e2e8f0'}>
               <div style={{ fontWeight: '500', fontSize: '13px', color: '#1a2332', marginBottom: '4px' }}>{section}</div>

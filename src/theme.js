@@ -84,19 +84,25 @@ export const badge = (status) => {
   return { backgroundColor: s.bg, color: s.color, padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: '500', display: 'inline-block' }
 }
 
-export const Nav = ({ active, onNewProject, onNewEnquiry }) => (
-  <div style={navStyle.nav}>
-    <div style={navStyle.logo}>
-      <img src="/echo-logo.png" alt="Echo Engineering Solutions" style={navStyle.logoImg} />
+export const Nav = ({ active, onNewProject, onNewEnquiry }) => {
+  const user = JSON.parse(localStorage.getItem('echobase_user') || '{}')
+  return (
+    <div style={navStyle.nav}>
+      <div style={navStyle.logo}>
+        <img src="/echo-logo.png" alt="Echo Engineering Solutions" style={navStyle.logoImg} />
+      </div>
+      <button onClick={() => window.location.href = '/'} style={active === 'dashboard' ? navStyle.navTabActive : navStyle.navTab}>Dashboard</button>
+      <button onClick={() => window.location.href = '/enquiries'} style={active === 'enquiries' ? navStyle.navTabActive : navStyle.navTab}>Enquiries</button>
+      <div style={navStyle.spacer}></div>
+      {onNewEnquiry && <button onClick={onNewEnquiry} style={{ ...btnStyle.primary, marginRight: '0.5rem' }}>+ New Enquiry</button>}
+      {onNewProject && <button onClick={onNewProject} style={{ ...btnStyle.primary, marginRight: '1rem' }}>+ New Project</button>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ fontSize: '13px', color: '#64748b' }}>{user.full_name}</div>
+        <button onClick={() => { localStorage.removeItem('echobase_user'); window.location.href = '/login' }}
+          style={{ backgroundColor: '#f1f5f9', color: '#64748b', border: '0.5px solid #e2e8f0', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+          Sign out
+        </button>
+      </div>
     </div>
-    <button onClick={() => window.location.href = '/'} style={active === 'dashboard' ? navStyle.navTabActive : navStyle.navTab}>Dashboard</button>
-    <button onClick={() => window.location.href = '/enquiries'} style={active === 'enquiries' ? navStyle.navTabActive : navStyle.navTab}>Enquiries</button>
-    <div style={navStyle.spacer}></div>
-    {onNewEnquiry && (
-      <button onClick={onNewEnquiry} style={{ ...btnStyle.primary, marginRight: '0.5rem' }}>+ New Enquiry</button>
-    )}
-    {onNewProject && (
-      <button onClick={onNewProject} style={btnStyle.primary}>+ New Project</button>
-    )}
-  </div>
-)
+  )
+}

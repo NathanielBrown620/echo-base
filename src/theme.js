@@ -89,6 +89,33 @@ export const Nav = ({ active, onNewProject, onNewEnquiry }) => {
   const isAdmin = user.roles?.includes('admin')
   const canSeeEnquiries = user.roles?.some(r => ['admin', 'operations', 'project_manager', 'sales'].includes(r))
   const canSeeProjects = user.roles?.some(r => ['admin', 'operations', 'project_manager', 'engineer', 'site_delivery'].includes(r))
+  const [unread, setUnread] = React.useState(0)
+  const [showNotifs, setShowNotifs] = React.useState(false)
+  const [notifs, setNotifs] = React.useState([])
+
+  React.useEffect(() => {
+    if (!user.id) return
+    async function loadNotifs() {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY)
+      const { data } = await sb.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20)
+      if (data) {
+        setNotifs(data)
+        setUnread(data.filter(n => !n.read).length)
+      }
+    }
+    loadNotifs()
+    const interval = setInterval(loadNotifs, 30000)
+    return () => clearInterval(interval)
+  }, [user.id])
+
+  async function markAllRead() {
+    const { createClient } = await import('@supabase/supabase-js')
+    const sb = createClient(process.env.REACT_APP_SUPABASE_URL, process.env.REACT_APP_SUPABASE_ANON_KEY)
+    await sb.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
+    setUnread(0)
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })))
+  }
 
   return (
     <div style={navStyle.nav}>
@@ -107,6 +134,48 @@ export const Nav = ({ active, onNewProject, onNewEnquiry }) => {
       <div style={navStyle.spacer}></div>
       {onNewEnquiry && <button onClick={onNewEnquiry} style={{ ...btnStyle.primary, marginRight: '0.5rem' }}>+ New Enquiry</button>}
       {onNewProject && <button onClick={onNewProject} style={{ ...btnStyle.primary, marginRight: '1rem' }}>+ New Project</button>}
+
+      <div style={{ position: 'relative', marginRight: '1rem' }}>
+        <button onClick={() => { setShowNotifs(!showNotifs); if (!showNotifs) markAllRead() }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem', position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          {unread > 0 && (
+            <span style={{ position: 'absolute', top: '0', right: '0', backgroundColor: '#ef4444', color: 'white', borderRadius: '50%', width: '16px', height: '16px', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+        </button>
+
+        {showNotifs && (
+          <div style={{ position: 'absolute', right: 0, top: '48px', width: '320px', backgroundColor: '#fff', borderRadius: '8px', border: '0.5px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', zIndex: 200 }}>
+            <div style={{ padding: '12px 16px', borderBottom: '0.5px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1a2332' }}>Notifications</span>
+              <button onClick={markAllRead} style={{ fontSize: '11px', color: '#29ABE2', background: 'none', border: 'none', cursor: 'pointer' }}>Mark all read</button>
+            </div>
+            <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+              {notifs.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>No notifications</div>
+              ) : (
+                notifs.map(n => (
+                  <div key={n.id}
+                    onClick={() => { if (n.link) window.location.href = n.link; setShowNotifs(false) }}
+                    style={{ padding: '12px 16px', borderBottom: '0.5px solid #f1f5f9', backgroundColor: n.read ? '#fff' : '#f0f9ff', cursor: n.link ? 'pointer' : 'default' }}
+                    onMouseOver={e => { if (n.link) e.currentTarget.style.backgroundColor = '#e8f6fd' }}
+                    onMouseOut={e => e.currentTarget.style.backgroundColor = n.read ? '#fff' : '#f0f9ff'}>
+                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a2332', marginBottom: '2px' }}>{n.title}</div>
+                    <div style={{ fontSize: '12px', color: '#64748b' }}>{n.message}</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>{new Date(n.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
         <div style={{ fontSize: '13px', color: '#64748b' }}>{user.full_name}</div>
         <button onClick={() => { localStorage.removeItem('echobase_user'); window.location.href = '/login' }}

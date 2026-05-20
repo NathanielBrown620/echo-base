@@ -51,15 +51,34 @@ function ProjectChat() {
 
   async function sendMessage() {
     if (!newMessage.trim()) return
+    const msg = newMessage.trim()
+    setNewMessage('')
+    setReplyTo(null)
+
     await supabase.from('project_messages').insert([{
       project_id: projectId,
       user_id: user.id,
       user_name: user.full_name,
-      message: newMessage.trim(),
+      message: msg,
       parent_id: replyTo?.id || null
     }])
-    setNewMessage('')
-    setReplyTo(null)
+
+    const { data: allUsers } = await supabase.from('app_users').select('id').eq('active', true)
+    if (allUsers && project) {
+      const others = allUsers.filter(u => u.id !== user.id)
+      if (others.length > 0) {
+        await supabase.from('notifications').insert(
+          others.map(u => ({
+            user_id: u.id,
+            type: 'chat',
+            title: `New message in ${project.name}`,
+            message: `${user.full_name}: ${msg.slice(0, 80)}${msg.length > 80 ? '...' : ''}`,
+            link: `/project/${projectId}/chat`,
+            read: false
+          }))
+        )
+      }
+    }
   }
 
   function toggleThread(id) {

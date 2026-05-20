@@ -87,14 +87,20 @@ export const badge = (status) => {
 export const Nav = ({ active, onNewProject, onNewEnquiry }) => {
   const user = JSON.parse(localStorage.getItem('echobase_user') || '{}')
   const isAdmin = user.roles?.includes('admin')
+  const canSeeEnquiries = user.roles?.some(r => ['admin', 'operations', 'project_manager', 'sales'].includes(r))
+  const canSeeProjects = user.roles?.some(r => ['admin', 'operations', 'project_manager', 'engineer', 'site_delivery'].includes(r))
 
   return (
     <div style={navStyle.nav}>
       <div style={navStyle.logo}>
         <img src="/echo-logo.png" alt="Echo Engineering Solutions" style={navStyle.logoImg} />
       </div>
-      <button onClick={() => window.location.href = '/'} style={active === 'dashboard' ? navStyle.navTabActive : navStyle.navTab}>Dashboard</button>
-      <button onClick={() => window.location.href = '/enquiries'} style={active === 'enquiries' ? navStyle.navTabActive : navStyle.navTab}>Enquiries</button>
+      {canSeeProjects && (
+        <button onClick={() => window.location.href = '/'} style={active === 'dashboard' ? navStyle.navTabActive : navStyle.navTab}>Dashboard</button>
+      )}
+      {canSeeEnquiries && (
+        <button onClick={() => window.location.href = '/enquiries'} style={active === 'enquiries' ? navStyle.navTabActive : navStyle.navTab}>Enquiries</button>
+      )}
       {isAdmin && (
         <button onClick={() => window.location.href = '/users'} style={active === 'users' ? navStyle.navTabActive : navStyle.navTab}>Users</button>
       )}

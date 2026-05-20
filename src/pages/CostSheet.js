@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
 
 const LABOUR_GRADES = [
@@ -44,7 +45,7 @@ function defaultLabourRows(grades) {
 }
 
 function CostSheet() {
-  const enquiryId = window.location.pathname.split('/').pop()
+  const { id: enquiryId } = useParams()
   const [lineItems, setLineItems] = useState([])
   const [activeItem, setActiveItem] = useState(null)
   const [showNewItem, setShowNewItem] = useState(false)
@@ -61,26 +62,10 @@ function CostSheet() {
   const [gpPct, setGpPct] = useState(35)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-  async function load() {
-    const { data } = await supabase.from('cost_line_items').select('*').eq('enquiry_id', enquiryId).order('created_at')
-    if (data) setLineItems(data)
-    if (data && data.length > 0) loadLineItem(data[0])
-  }
-  load()
-}, [enquiryId])
-
-  async function fetchLineItems() {
-    const { data } = await supabase.from('cost_line_items').select('*').eq('enquiry_id', enquiryId).order('created_at')
-    if (data) setLineItems(data)
-    if (data && data.length > 0) loadLineItem(data[0])
-  }
-
   async function loadLineItem(item) {
     setActiveItem(item)
     setOvhPct(item.overheads_percent || 15)
     setGpPct(item.gp_percent || 35)
-
     const [mat, sub, lab, tool, subs, trav, des] = await Promise.all([
       supabase.from('cost_materials').select('*').eq('line_item_id', item.id),
       supabase.from('cost_subcontract').select('*').eq('line_item_id', item.id),
@@ -90,7 +75,6 @@ function CostSheet() {
       supabase.from('cost_travel').select('*').eq('line_item_id', item.id),
       supabase.from('cost_design').select('*').eq('line_item_id', item.id),
     ])
-
     setMaterials(mat.data?.length ? mat.data : [{ description: '', supplier: '', cost: 0, quantity: 1 }])
     setSubcontract(sub.data?.length ? sub.data : [{ aspect: '', company: '', cost: 0 }])
     setLabour(lab.data?.length ? lab.data : defaultLabourRows(LABOUR_GRADES))
@@ -99,6 +83,17 @@ function CostSheet() {
     setTravel(trav.data?.length ? trav.data : [{ type: '', trips: 1, distance: 0, mileage_rate: 0.45 }])
     setDesign(des.data?.length ? des.data : defaultLabourRows(DESIGN_GRADES))
   }
+
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase.from('cost_line_items').select('*').eq('enquiry_id', enquiryId).order('created_at')
+      if (data) {
+        setLineItems(data)
+        if (data.length > 0) loadLineItem(data[0])
+      }
+    }
+    load()
+  }, [enquiryId])
 
   async function createLineItem() {
     if (!newItemName.trim()) return
@@ -109,7 +104,8 @@ function CostSheet() {
     if (data) {
       setShowNewItem(false)
       setNewItemName('')
-      await fetchLineItems()
+      const { data: items } = await supabase.from('cost_line_items').select('*').eq('enquiry_id', enquiryId).order('created_at')
+      if (items) setLineItems(items)
       loadLineItem(data[0])
     }
   }
@@ -117,9 +113,7 @@ function CostSheet() {
   async function saveLineItem() {
     if (!activeItem) return
     setSaving(true)
-
     await supabase.from('cost_line_items').update({ overheads_percent: ovhPct, gp_percent: gpPct }).eq('id', activeItem.id)
-
     await supabase.from('cost_materials').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_subcontract').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_labour').delete().eq('line_item_id', activeItem.id)
@@ -127,7 +121,6 @@ function CostSheet() {
     await supabase.from('cost_subsistence').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_travel').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_design').delete().eq('line_item_id', activeItem.id)
-
     const liId = activeItem.id
     if (materials.length) await supabase.from('cost_materials').insert(materials.map(r => ({ ...r, line_item_id: liId, id: undefined })))
     if (subcontract.length) await supabase.from('cost_subcontract').insert(subcontract.map(r => ({ ...r, line_item_id: liId, id: undefined })))
@@ -136,10 +129,10 @@ function CostSheet() {
     if (subsistence.length) await supabase.from('cost_subsistence').insert(subsistence.map(r => ({ ...r, line_item_id: liId, id: undefined })))
     if (travel.length) await supabase.from('cost_travel').insert(travel.map(r => ({ ...r, line_item_id: liId, id: undefined })))
     if (design.filter(r => n(r.days) > 0).length) await supabase.from('cost_design').insert(design.filter(r => n(r.days) > 0).map(r => ({ ...r, line_item_id: liId, id: undefined })))
-
     setSaving(false)
     alert('Saved successfully')
   }
+
   const matTotal = materials.reduce((s, r) => s + n(r.cost) * n(r.quantity), 0)
   const subTotal = subcontract.reduce((s, r) => s + n(r.cost), 0)
   const labTotal = labour.reduce((s, r) => s + n(r.days) * n(r.hours_per_day) * n(r.hourly_rate), 0)

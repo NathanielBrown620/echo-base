@@ -27,8 +27,8 @@ export const navStyle = {
   nav: { background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '0 2rem', display: 'flex', alignItems: 'center', gap: '0', height: '80px', position: 'sticky', top: 0, zIndex: 100 },
   logo: { display: 'flex', alignItems: 'center', marginRight: '2rem' },
   logoImg: { height: '64px' },
- navTab: { fontSize: '15px', color: '#64748b', padding: '0 1.5rem', cursor: 'pointer', border: 'none', background: 'none', height: '80px', display: 'flex', alignItems: 'center', borderBottom: '3px solid transparent', fontWeight: '400' },
-navTabActive: { fontSize: '15px', color: '#ffffff', padding: '0 1.5rem', cursor: 'pointer', border: 'none', background: '#29ABE2', height: '80px', display: 'flex', alignItems: 'center', borderBottom: '3px solid #1a8fc4', fontWeight: '600' },
+  navTab: { fontSize: '15px', color: '#64748b', padding: '0 1.5rem', cursor: 'pointer', border: 'none', background: 'none', height: '80px', display: 'flex', alignItems: 'center', borderBottom: '3px solid transparent', fontWeight: '400' },
+  navTabActive: { fontSize: '15px', color: '#ffffff', padding: '0 1.5rem', cursor: 'pointer', border: 'none', background: '#29ABE2', height: '80px', display: 'flex', alignItems: 'center', borderBottom: '3px solid #1a8fc4', fontWeight: '600' },
   spacer: { flex: 1 },
 }
 
@@ -86,6 +86,8 @@ export const badge = (status) => {
 
 export const Nav = ({ active, onNewProject, onNewEnquiry }) => {
   const user = JSON.parse(localStorage.getItem('echobase_user') || '{}')
+  const isAdmin = user.roles?.includes('admin')
+
   return (
     <div style={navStyle.nav}>
       <div style={navStyle.logo}>
@@ -93,6 +95,9 @@ export const Nav = ({ active, onNewProject, onNewEnquiry }) => {
       </div>
       <button onClick={() => window.location.href = '/'} style={active === 'dashboard' ? navStyle.navTabActive : navStyle.navTab}>Dashboard</button>
       <button onClick={() => window.location.href = '/enquiries'} style={active === 'enquiries' ? navStyle.navTabActive : navStyle.navTab}>Enquiries</button>
+      {isAdmin && (
+        <button onClick={() => window.location.href = '/users'} style={active === 'users' ? navStyle.navTabActive : navStyle.navTab}>Users</button>
+      )}
       <div style={navStyle.spacer}></div>
       {onNewEnquiry && <button onClick={onNewEnquiry} style={{ ...btnStyle.primary, marginRight: '0.5rem' }}>+ New Enquiry</button>}
       {onNewProject && <button onClick={onNewProject} style={{ ...btnStyle.primary, marginRight: '1rem' }}>+ New Project</button>}

@@ -6,6 +6,7 @@ import Enquiries from './pages/Enquiries'
 import EnquiryDetail from './pages/EnquiryDetail'
 import CostSheet from './pages/CostSheet'
 import Login from './pages/Login'
+import Users from './pages/Users'
 import { getUser } from './auth'
 
 function ProtectedRoute({ children }) {
@@ -24,6 +25,7 @@ function App() {
         <Route path="/enquiries" element={<ProtectedRoute><Enquiries /></ProtectedRoute>} />
         <Route path="/enquiry/:id" element={<ProtectedRoute><EnquiryDetail /></ProtectedRoute>} />
         <Route path="/cost/:id" element={<ProtectedRoute><CostSheet /></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       </Routes>
     </Router>
   )

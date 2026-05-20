@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Dashboard from './pages/Dashboard'
 import SiteDashboard from './pages/SiteDashboard'
 import ProjectDetail from './pages/ProjectDetail'
+import ProjectChat from './pages/ProjectChat'
 import Enquiries from './pages/Enquiries'
 import EnquiryDetail from './pages/EnquiryDetail'
 import CostSheet from './pages/CostSheet'
@@ -33,8 +34,8 @@ function ProtectedRoute({ children, section }) {
 function HomeDashboard() {
   const user = getUser()
   if (!user) return <Navigate to="/login" />
-  const isSiteOnly = user.roles.every(r => r === 'site_delivery')
-  if (isSiteOnly) return <SiteDashboard />
+  const hasOfficeRole = user.roles.some(r => ['admin', 'operations', 'project_manager', 'engineer', 'sales'].includes(r))
+  if (!hasOfficeRole && user.roles.includes('site_delivery')) return <SiteDashboard />
   return <Dashboard />
 }
 
@@ -45,6 +46,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<HomeDashboard />} />
         <Route path="/project/:id" element={<ProtectedRoute section="projects"><ProjectDetail /></ProtectedRoute>} />
+        <Route path="/project/:id/chat" element={<ProtectedRoute section="projects"><ProjectChat /></ProtectedRoute>} />
         <Route path="/enquiries" element={<ProtectedRoute section="enquiries"><Enquiries /></ProtectedRoute>} />
         <Route path="/enquiry/:id" element={<ProtectedRoute section="enquiries"><EnquiryDetail /></ProtectedRoute>} />
         <Route path="/cost/:id" element={<ProtectedRoute section="costmodel"><CostSheet /></ProtectedRoute>} />

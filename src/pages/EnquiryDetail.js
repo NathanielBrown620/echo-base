@@ -8,18 +8,23 @@ function EnquiryDetail() {
   const [form, setForm] = useState({})
   const { id } = useParams()
 
-  useEffect(() => { fetchEnquiry() }, [id])
-
-  async function fetchEnquiry() {
-    const { data, error } = await supabase.from('enquiries').select('*').eq('id', id).single()
-    if (error) console.error(error)
-    else { setEnquiry(data); setForm(data) }
-  }
+  useEffect(() => {
+    async function load() {
+      const { data, error } = await supabase.from('enquiries').select('*').eq('id', id).single()
+      if (error) console.error(error)
+      else { setEnquiry(data); setForm(data) }
+    }
+    load()
+  }, [id])
 
   async function saveEnquiry() {
     const { error } = await supabase.from('enquiries').update(form).eq('id', id)
     if (error) console.error(error)
-    else { setEditing(false); fetchEnquiry() }
+    else {
+      setEditing(false)
+      const { data } = await supabase.from('enquiries').select('*').eq('id', id).single()
+      if (data) { setEnquiry(data); setForm(data) }
+    }
   }
 
   const statusColour = (status) => {

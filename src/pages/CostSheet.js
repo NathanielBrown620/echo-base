@@ -113,7 +113,9 @@ function CostSheet() {
   async function saveLineItem() {
     if (!activeItem) return
     setSaving(true)
+
     await supabase.from('cost_line_items').update({ overheads_percent: ovhPct, gp_percent: gpPct }).eq('id', activeItem.id)
+
     await supabase.from('cost_materials').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_subcontract').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_labour').delete().eq('line_item_id', activeItem.id)
@@ -121,14 +123,17 @@ function CostSheet() {
     await supabase.from('cost_subsistence').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_travel').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_design').delete().eq('line_item_id', activeItem.id)
+
     const liId = activeItem.id
-    if (materials.length) await supabase.from('cost_materials').insert(materials.map(r => ({ ...r, line_item_id: liId, id: undefined })))
-    if (subcontract.length) await supabase.from('cost_subcontract').insert(subcontract.map(r => ({ ...r, line_item_id: liId, id: undefined })))
-    if (labour.filter(r => n(r.days) > 0).length) await supabase.from('cost_labour').insert(labour.filter(r => n(r.days) > 0).map(r => ({ ...r, line_item_id: liId, id: undefined })))
-    if (tools.length) await supabase.from('cost_tools').insert(tools.map(r => ({ ...r, line_item_id: liId, id: undefined })))
-    if (subsistence.length) await supabase.from('cost_subsistence').insert(subsistence.map(r => ({ ...r, line_item_id: liId, id: undefined })))
-    if (travel.length) await supabase.from('cost_travel').insert(travel.map(r => ({ ...r, line_item_id: liId, id: undefined })))
-    if (design.filter(r => n(r.days) > 0).length) await supabase.from('cost_design').insert(design.filter(r => n(r.days) > 0).map(r => ({ ...r, line_item_id: liId, id: undefined })))
+
+    if (materials.length) await supabase.from('cost_materials').insert(materials.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
+    if (subcontract.length) await supabase.from('cost_subcontract').insert(subcontract.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
+    if (labour.filter(r => n(r.days) > 0).length) await supabase.from('cost_labour').insert(labour.filter(r => n(r.days) > 0).map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
+    if (tools.length) await supabase.from('cost_tools').insert(tools.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
+    if (subsistence.length) await supabase.from('cost_subsistence').insert(subsistence.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
+    if (travel.length) await supabase.from('cost_travel').insert(travel.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
+    if (design.filter(r => n(r.days) > 0).length) await supabase.from('cost_design').insert(design.filter(r => n(r.days) > 0).map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
+
     setSaving(false)
     alert('Saved successfully')
   }

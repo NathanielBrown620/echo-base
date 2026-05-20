@@ -134,6 +134,8 @@ function CostSheet() {
     if (travel.length) await supabase.from('cost_travel').insert(travel.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
     if (design.filter(r => n(r.days) > 0).length) await supabase.from('cost_design').insert(design.filter(r => n(r.days) > 0).map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
 
+    await supabase.from('enquiries').update({ estimated_value: sellingPrice }).eq('id', enquiryId)
+
     setSaving(false)
     alert('Saved successfully')
   }

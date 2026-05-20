@@ -1,59 +1,59 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import Dashboard from './pages/Dashboard'
-import SiteDashboard from './pages/SiteDashboard'
-import ProjectDetail from './pages/ProjectDetail'
-import ProjectChat from './pages/ProjectChat'
-import Enquiries from './pages/Enquiries'
-import EnquiryDetail from './pages/EnquiryDetail'
-import CostSheet from './pages/CostSheet'
-import Login from './pages/Login'
-import Users from './pages/Users'
-import { getUser, canAccess } from './auth'
+import React, { useEffect, useState } from 'react'
+import { supabase } from '../supabase'
+import { Nav, colors, ECHO_BLUE, badge } from '../theme'
+import { getUser } from '../auth'
 
-function ProtectedRoute({ children, section }) {
+function SiteDashboard() {
+  const [projects, setProjects] = useState([])
   const user = getUser()
-  if (!user) return <Navigate to="/login" />
-  if (section && !canAccess(user, section)) {
-    return (
-      <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", backgroundColor: '#f0f4f8', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: '#64748b' }}>
-          <div style={{ fontSize: '24px', marginBottom: '0.5rem' }}>🚫</div>
-          <div style={{ fontSize: '16px', fontWeight: '600', color: '#1a2332', marginBottom: '0.5rem' }}>Access Denied</div>
-          <div style={{ fontSize: '13px', marginBottom: '1rem' }}>You don't have permission to view this page.</div>
-          <button onClick={() => window.location.href = '/'} style={{ backgroundColor: '#29ABE2', color: 'white', border: 'none', padding: '0.5rem 1.2rem', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>
-            Back to Dashboard
-          </button>
+
+  useEffect(() => {
+    async function load() {
+      const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false })
+      if (error) console.error(error)
+      else setProjects(data)
+    }
+    load()
+  }, [])
+
+  const activeProjects = projects.filter(p => !['Complete', 'Pricing'].includes(p.stage))
+
+  return (
+    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", backgroundColor: colors.bg, minHeight: '100vh' }}>
+      <Nav active="dashboard" />
+      <div style={{ padding: '1.5rem 2rem' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ fontSize: '20px', fontWeight: '600', color: '#1a2332' }}>Good to see you, {user?.full_name?.split(' ')[0]}</div>
+          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Here are your active projects</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+          {activeProjects.length === 0 ? (
+            <div style={{ gridColumn: '1/-1', backgroundColor: '#fff', borderRadius: '8px', border: '0.5px solid #e2e8f0', padding: '3rem', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+              No active projects at the moment
+            </div>
+          ) : (
+            activeProjects.map(project => (
+              <div key={project.id}
+                onClick={() => window.location.href = `/project/${project.id}`}
+                style={{ backgroundColor: '#fff', borderRadius: '8px', border: '0.5px solid #e2e8f0', padding: '1.25rem', cursor: 'pointer' }}
+                onMouseOver={e => e.currentTarget.style.borderColor = ECHO_BLUE}
+                onMouseOut={e => e.currentTarget.style.borderColor = '#e2e8f0'}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                  <div style={{ fontSize: '15px', fontWeight: '600', color: '#1a2332' }}>{project.name}</div>
+                  <span style={badge(project.stage)}>{project.stage}</span>
+                </div>
+                <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '0.5rem' }}>{project.client}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8', marginTop: '1rem', borderTop: '0.5px solid #f1f5f9', paddingTop: '0.75rem' }}>
+                  <span>PM: {project.project_manager || '—'}</span>
+                  <span>Due: {project.end_date || '—'}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
-    )
-  }
-  return children
-}
-
-function HomeDashboard() {
-  const user = getUser()
-  if (!user) return <Navigate to="/login" />
-  const hasOfficeRole = user.roles.some(r => ['admin', 'operations', 'project_manager', 'engineer', 'sales'].includes(r))
-  if (!hasOfficeRole && user.roles.includes('site_delivery')) return <SiteDashboard />
-  return <Dashboard />
-}
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={<HomeDashboard />} />
-        <Route path="/project/:id" element={<ProtectedRoute section="projects"><ProjectDetail /></ProtectedRoute>} />
-        <Route path="/project/:id/chat" element={<ProtectedRoute section="projects"><ProjectChat /></ProtectedRoute>} />
-        <Route path="/enquiries" element={<ProtectedRoute section="enquiries"><Enquiries /></ProtectedRoute>} />
-        <Route path="/enquiry/:id" element={<ProtectedRoute section="enquiries"><EnquiryDetail /></ProtectedRoute>} />
-        <Route path="/cost/:id" element={<ProtectedRoute section="costmodel"><CostSheet /></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute section="admin"><Users /></ProtectedRoute>} />
-      </Routes>
-    </Router>
+    </div>
   )
 }
 
-export default App
+export default SiteDashboard

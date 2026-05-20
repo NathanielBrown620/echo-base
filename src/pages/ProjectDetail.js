@@ -1,83 +1,90 @@
 import React, { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { Nav, pageStyle, cardStyle, tableStyle, btnStyle, badge, colors } from '../theme'
 
 function ProjectDetail() {
   const [project, setProject] = useState(null)
-  const id = window.location.pathname.split('/').pop()
+  const { id } = useParams()
 
- useEffect(() => {
-    async function fetchProject() {
+  useEffect(() => {
+    async function load() {
       const { data, error } = await supabase.from('projects').select('*').eq('id', id).single()
       if (error) console.error(error)
       else setProject(data)
     }
-    fetchProject()
+    load()
   }, [id])
-
-  if (!project) return <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: 'white', padding: '2rem' }}>Loading...</div>
-
-  const sections = ['Sales Handover', 'Commercial', 'Project Management', 'Engineering', 'Procurement', 'HSEQ', 'Change Control', 'Handover']
 
   const ragColour = (rag) => {
     if (rag === 'green') return '#22c55e'
     if (rag === 'amber') return '#f59e0b'
     if (rag === 'red') return '#ef4444'
-    return '#6b7280'
+    return '#94a3b8'
   }
 
+  const sections = ['Sales Handover', 'Commercial', 'Project Management', 'Engineering', 'Procurement', 'HSEQ', 'Change Control', 'Handover']
+
+  if (!project) return (
+    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", backgroundColor: colors.bg, minHeight: '100vh' }}>
+      <Nav active="dashboard" />
+      <div style={{ padding: '2rem', color: '#64748b' }}>Loading...</div>
+    </div>
+  )
+
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: '2rem', backgroundColor: '#0f172a', minHeight: '100vh', color: 'white' }}>
+    <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", backgroundColor: colors.bg, minHeight: '100vh' }}>
+      <Nav active="dashboard" />
 
-      <div style={{ marginBottom: '1.5rem' }}>
-        <button onClick={() => window.location.href = '/'} style={{ backgroundColor: 'transparent', color: '#38bdf8', border: 'none', cursor: 'pointer', fontSize: '0.9rem', padding: 0 }}>
-          ← Back to Dashboard
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'white', margin: 0 }}>{project.name}</h1>
-          <div style={{ color: '#94a3b8', marginTop: '0.3rem' }}>{project.client}</div>
+      <div style={{ padding: '1.5rem 2rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <button onClick={() => window.location.href = '/'} style={btnStyle.ghost}>← Back to Dashboard</button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ backgroundColor: ragColour(project.rag_status), borderRadius: '50%', display: 'inline-block', width: '12px', height: '12px' }}></span>
-          <span style={{ backgroundColor: '#1e293b', padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.85rem' }}>{project.stage}</span>
-        </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-        {[
-          { label: 'Contract Value', value: `£${Number(project.value).toLocaleString()}` },
-          { label: 'Project Manager', value: project.project_manager },
-          { label: 'Start Date', value: project.start_date },
-          { label: 'Completion Date', value: project.end_date },
-        ].map((stat) => (
-          <div key={stat.label} style={{ backgroundColor: '#1e293b', borderRadius: '8px', padding: '1.2rem' }}>
-            <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{stat.label}</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'white', marginTop: '0.3rem' }}>{stat.value}</div>
+        <div style={pageStyle.header}>
+          <div>
+            <div style={pageStyle.title}>{project.name}</div>
+            <div style={pageStyle.subtitle}>{project.client}</div>
           </div>
-        ))}
-      </div>
-
-      {project.description && (
-        <div style={{ backgroundColor: '#1e293b', borderRadius: '8px', padding: '1.2rem', marginBottom: '2rem' }}>
-          <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Description</div>
-          <div>{project.description}</div>
-        </div>
-      )}
-
-      <h2 style={{ fontSize: '1.1rem', color: '#94a3b8', marginBottom: '1rem' }}>Project Sections</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-        {sections.map((section) => (
-          <div key={section} style={{ backgroundColor: '#1e293b', borderRadius: '8px', padding: '1.2rem', cursor: 'pointer', border: '1px solid #334155' }}
-            onMouseOver={e => e.currentTarget.style.borderColor = '#38bdf8'}
-            onMouseOut={e => e.currentTarget.style.borderColor = '#334155'}>
-            <div style={{ fontWeight: 'bold', marginBottom: '0.3rem' }}>{section}</div>
-            <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>0 items</div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{ backgroundColor: ragColour(project.rag_status), borderRadius: '50%', display: 'inline-block', width: '12px', height: '12px' }}></span>
+            <span style={badge(project.stage)}>{project.stage}</span>
           </div>
-        ))}
-      </div>
+        </div>
 
+        <div style={{ ...cardStyle.statGrid, marginBottom: '1.5rem' }}>
+          {[
+            { label: 'Contract Value', value: `£${Number(project.value || 0).toLocaleString()}` },
+            { label: 'Project Manager', value: project.project_manager || '—' },
+            { label: 'Start Date', value: project.start_date || '—' },
+            { label: 'Completion Date', value: project.end_date || '—' },
+          ].map((stat) => (
+            <div key={stat.label} style={cardStyle.card}>
+              <div style={cardStyle.statLabel}>{stat.label}</div>
+              <div style={{ fontSize: '15px', fontWeight: '600', color: '#1a2332', marginTop: '2px' }}>{stat.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {project.description && (
+          <div style={{ ...cardStyle.card, marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500', marginBottom: '0.5rem' }}>Description</div>
+            <div style={{ fontSize: '13px', color: '#374151' }}>{project.description}</div>
+          </div>
+        )}
+
+        <div style={{ fontSize: '13px', fontWeight: '600', color: '#64748b', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Project Sections</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+          {sections.map((section) => (
+            <div key={section} style={{ ...cardStyle.card, cursor: 'pointer', transition: 'border-color 0.15s' }}
+              onMouseOver={e => e.currentTarget.style.borderColor = '#29ABE2'}
+              onMouseOut={e => e.currentTarget.style.borderColor = '#e2e8f0'}>
+              <div style={{ fontWeight: '500', fontSize: '13px', color: '#1a2332', marginBottom: '4px' }}>{section}</div>
+              <div style={{ color: '#94a3b8', fontSize: '12px' }}>0 items</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

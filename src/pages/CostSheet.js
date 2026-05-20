@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { Nav, btnStyle, colors, ECHO_BLUE } from '../theme'
 
 const LABOUR_GRADES = [
   { grade: 'Principal Engineer', types: [{ t: 'Normal Working', r: 50 }, { t: 'Time & Half', r: 75 }, { t: 'Double Time', r: 100 }] },
@@ -20,27 +21,25 @@ const DESIGN_GRADES = [
 const fmt = v => '£' + parseFloat(v || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 const n = v => parseFloat(v) || 0
 
-const style = {
-  page: { fontFamily: 'sans-serif', padding: '2rem', backgroundColor: '#0f172a', minHeight: '100vh', color: 'white' },
-  section: { backgroundColor: '#1e293b', borderRadius: '8px', marginBottom: '1rem', overflow: 'hidden' },
-  secHeader: { padding: '8px 14px', fontWeight: 'bold', fontSize: '13px', backgroundColor: '#0f172a', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between' },
+const s = {
+  page: { fontFamily: "'Segoe UI', system-ui, sans-serif", backgroundColor: colors.bg, minHeight: '100vh' },
+  wrap: { padding: '1.5rem 2rem' },
+  section: { background: '#fff', borderRadius: '8px', border: '0.5px solid #e2e8f0', marginBottom: '1rem', overflow: 'hidden' },
+  secHead: { padding: '10px 16px', fontWeight: '600', fontSize: '13px', backgroundColor: '#f8fafc', borderBottom: '0.5px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1a2332' },
+  secTotal: { fontSize: '13px', color: ECHO_BLUE, fontWeight: '600' },
   table: { width: '100%', borderCollapse: 'collapse' },
-  th: { fontSize: '11px', color: '#94a3b8', fontWeight: 'normal', padding: '5px 8px', textAlign: 'left', borderBottom: '1px solid #334155', backgroundColor: '#0f172a' },
-  td: { padding: '4px 6px', borderBottom: '1px solid #1e293b' },
-  input: { width: '100%', background: 'transparent', border: 'none', color: 'white', fontSize: '12px', padding: '2px 4px', outline: 'none' },
-  numInput: { width: '100%', background: 'transparent', border: 'none', color: 'white', fontSize: '12px', padding: '2px 4px', outline: 'none', textAlign: 'right' },
-  addBtn: { fontSize: '11px', color: '#38bdf8', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 10px' },
-  delBtn: { fontSize: '10px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' },
-  gradeHeader: { fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', backgroundColor: '#0f172a', padding: '4px 8px' },
+  th: { fontSize: '11px', color: '#94a3b8', fontWeight: '500', padding: '6px 12px', textAlign: 'left', borderBottom: '0.5px solid #e2e8f0', backgroundColor: '#f8fafc', textTransform: 'uppercase', letterSpacing: '0.5px' },
+  td: { padding: '5px 8px', borderBottom: '0.5px solid #f1f5f9' },
+  input: { width: '100%', background: 'transparent', border: 'none', color: '#1a2332', fontSize: '12px', padding: '2px 4px', outline: 'none' },
+  numInput: { width: '100%', background: 'transparent', border: 'none', color: '#1a2332', fontSize: '12px', padding: '2px 4px', outline: 'none', textAlign: 'right' },
+  addBtn: { fontSize: '12px', color: ECHO_BLUE, background: 'none', border: 'none', cursor: 'pointer', padding: '6px 12px', fontWeight: '500' },
+  delBtn: { fontSize: '11px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' },
+  gradeHead: { fontSize: '11px', fontWeight: '600', color: '#64748b', backgroundColor: '#f8fafc', padding: '5px 12px', borderBottom: '0.5px solid #e2e8f0' },
 }
 
 function defaultLabourRows(grades) {
   const rows = []
-  grades.forEach(g => {
-    g.types.forEach(wt => {
-      rows.push({ grade: g.grade, work_type: wt.t, days: 0, hours_per_day: 10, hourly_rate: wt.r })
-    })
-  })
+  grades.forEach(g => g.types.forEach(wt => rows.push({ grade: g.grade, work_type: wt.t, days: 0, hours_per_day: 10, hourly_rate: wt.r })))
   return rows
 }
 
@@ -87,23 +86,16 @@ function CostSheet() {
   useEffect(() => {
     async function load() {
       const { data } = await supabase.from('cost_line_items').select('*').eq('enquiry_id', enquiryId).order('created_at')
-      if (data) {
-        setLineItems(data)
-        if (data.length > 0) loadLineItem(data[0])
-      }
+      if (data) { setLineItems(data); if (data.length > 0) loadLineItem(data[0]) }
     }
     load()
   }, [enquiryId])
 
   async function createLineItem() {
     if (!newItemName.trim()) return
-    const { data } = await supabase.from('cost_line_items').insert([{
-      enquiry_id: enquiryId, name: newItemName, discipline: newItemDisc,
-      overheads_percent: 15, gp_percent: 35
-    }]).select()
+    const { data } = await supabase.from('cost_line_items').insert([{ enquiry_id: enquiryId, name: newItemName, discipline: newItemDisc, overheads_percent: 15, gp_percent: 35 }]).select()
     if (data) {
-      setShowNewItem(false)
-      setNewItemName('')
+      setShowNewItem(false); setNewItemName('')
       const { data: items } = await supabase.from('cost_line_items').select('*').eq('enquiry_id', enquiryId).order('created_at')
       if (items) setLineItems(items)
       loadLineItem(data[0])
@@ -113,9 +105,7 @@ function CostSheet() {
   async function saveLineItem() {
     if (!activeItem) return
     setSaving(true)
-
     await supabase.from('cost_line_items').update({ overheads_percent: ovhPct, gp_percent: gpPct }).eq('id', activeItem.id)
-
     await supabase.from('cost_materials').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_subcontract').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_labour').delete().eq('line_item_id', activeItem.id)
@@ -123,9 +113,7 @@ function CostSheet() {
     await supabase.from('cost_subsistence').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_travel').delete().eq('line_item_id', activeItem.id)
     await supabase.from('cost_design').delete().eq('line_item_id', activeItem.id)
-
     const liId = activeItem.id
-
     if (materials.length) await supabase.from('cost_materials').insert(materials.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
     if (subcontract.length) await supabase.from('cost_subcontract').insert(subcontract.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
     if (labour.filter(r => n(r.days) > 0).length) await supabase.from('cost_labour').insert(labour.filter(r => n(r.days) > 0).map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
@@ -133,9 +121,7 @@ function CostSheet() {
     if (subsistence.length) await supabase.from('cost_subsistence').insert(subsistence.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
     if (travel.length) await supabase.from('cost_travel').insert(travel.map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
     if (design.filter(r => n(r.days) > 0).length) await supabase.from('cost_design').insert(design.filter(r => n(r.days) > 0).map(({ id, ...r }) => ({ ...r, line_item_id: liId })))
-
     await supabase.from('enquiries').update({ estimated_value: sellingPrice }).eq('id', enquiryId)
-
     setSaving(false)
     alert('Saved successfully')
   }
@@ -153,225 +139,240 @@ function CostSheet() {
   const gpD = n(gpPct) / 100
   const sellingPrice = gpD >= 1 ? 0 : budget / (1 - gpD)
 
+  const inpSel = { background: '#fff', border: '0.5px solid #e2e8f0', color: '#1a2332', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '13px' }
+
   return (
-    <div style={style.page}>
-      <div style={{ marginBottom: '1rem' }}>
-        <button onClick={() => window.location.href = `/enquiry/${enquiryId}`} style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer' }}>← Back to Enquiry</button>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#38bdf8' }}>Cost Model</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={() => setShowNewItem(true)} style={{ backgroundColor: '#1e293b', color: 'white', border: '1px solid #334155', padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>+ Line Item</button>
-          {activeItem && <button onClick={saveLineItem} style={{ backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', padding: '0.4rem 1rem', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>{saving ? 'Saving...' : 'Save'}</button>}
-        </div>
-      </div>
-
-      {showNewItem && (
-        <div style={{ backgroundColor: '#1e293b', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <input value={newItemName} onChange={e => setNewItemName(e.target.value)} placeholder="Line item name" style={{ flex: 1, background: '#0f172a', border: '1px solid #334155', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '6px' }} />
-          <select value={newItemDisc} onChange={e => setNewItemDisc(e.target.value)} style={{ background: '#0f172a', border: '1px solid #334155', color: 'white', padding: '0.4rem 0.8rem', borderRadius: '6px' }}>
-            <option>Mechanical</option><option>Electrical</option><option>Construction</option>
-          </select>
-          <button onClick={createLineItem} style={{ backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', padding: '0.4rem 1rem', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Create</button>
-          <button onClick={() => setShowNewItem(false)} style={{ background: '#334155', color: 'white', border: 'none', padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
-        </div>
-      )}
-
-      {lineItems.length > 0 && (
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-          {lineItems.map(item => (
-            <button key={item.id} onClick={() => loadLineItem(item)} style={{ padding: '0.4rem 1rem', borderRadius: '6px', cursor: 'pointer', border: '1px solid #334155', backgroundColor: activeItem?.id === item.id ? '#38bdf8' : '#1e293b', color: activeItem?.id === item.id ? '#0f172a' : 'white', fontWeight: activeItem?.id === item.id ? 'bold' : 'normal' }}>
-              {item.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {!activeItem && lineItems.length === 0 && (
-        <div style={{ textAlign: 'center', color: '#94a3b8', padding: '3rem' }}>No line items yet — click + Line Item to start</div>
-      )}
-
-      {activeItem && (<>
-        <div style={style.section}>
-          <div style={style.secHeader}><span>Materials</span><span style={{ color: '#94a3b8', fontSize: '12px' }}>{fmt(matTotal)}</span></div>
-          <table style={style.table}>
-            <thead><tr><th style={{...style.th, width:'35%'}}>Description</th><th style={{...style.th, width:'25%'}}>Supplier</th><th style={{...style.th, width:'15%', textAlign:'right'}}>Cost £</th><th style={{...style.th, width:'12%', textAlign:'right'}}>Qty</th><th style={{...style.th, width:'12%', textAlign:'right'}}>Total £</th><th style={{...style.th, width:'1%'}}></th></tr></thead>
-            <tbody>
-              {materials.map((r, i) => (
-                <tr key={i}>
-                  <td style={style.td}><input style={style.input} value={r.description || ''} onChange={e => { const a=[...materials]; a[i]={...a[i],description:e.target.value}; setMaterials(a) }} /></td>
-                  <td style={style.td}><input style={style.input} value={r.supplier || ''} onChange={e => { const a=[...materials]; a[i]={...a[i],supplier:e.target.value}; setMaterials(a) }} /></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.cost || 0} onChange={e => { const a=[...materials]; a[i]={...a[i],cost:e.target.value}; setMaterials(a) }} /></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.quantity || 1} onChange={e => { const a=[...materials]; a[i]={...a[i],quantity:e.target.value}; setMaterials(a) }} /></td>
-                  <td style={{...style.td, textAlign:'right', fontSize:'12px'}}>{fmt(n(r.cost)*n(r.quantity))}</td>
-                  <td style={style.td}><button style={style.delBtn} onClick={() => setMaterials(materials.filter((_,j)=>j!==i))}>✕</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button style={style.addBtn} onClick={() => setMaterials([...materials, {description:'',supplier:'',cost:0,quantity:1}])}>+ add row</button>
+    <div style={s.page}>
+      <Nav active="enquiries" />
+      <div style={s.wrap}>
+        <div style={{ marginBottom: '1rem' }}>
+          <button onClick={() => window.location.href = `/enquiry/${enquiryId}`} style={btnStyle.ghost}>← Back to Enquiry</button>
         </div>
 
-        <div style={style.section}>
-          <div style={style.secHeader}><span>Sub-contract</span><span style={{ color: '#94a3b8', fontSize: '12px' }}>{fmt(subTotal)}</span></div>
-          <table style={style.table}>
-            <thead><tr><th style={{...style.th, width:'40%'}}>Aspect of works</th><th style={{...style.th, width:'40%'}}>Company / quote ref</th><th style={{...style.th, width:'18%', textAlign:'right'}}>Cost £</th><th style={{...style.th, width:'2%'}}></th></tr></thead>
-            <tbody>
-              {subcontract.map((r, i) => (
-                <tr key={i}>
-                  <td style={style.td}><input style={style.input} value={r.aspect || ''} onChange={e => { const a=[...subcontract]; a[i]={...a[i],aspect:e.target.value}; setSubcontract(a) }} /></td>
-                  <td style={style.td}><input style={style.input} value={r.company || ''} onChange={e => { const a=[...subcontract]; a[i]={...a[i],company:e.target.value}; setSubcontract(a) }} /></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.cost || 0} onChange={e => { const a=[...subcontract]; a[i]={...a[i],cost:e.target.value}; setSubcontract(a) }} /></td>
-                  <td style={style.td}><button style={style.delBtn} onClick={() => setSubcontract(subcontract.filter((_,j)=>j!==i))}>✕</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button style={style.addBtn} onClick={() => setSubcontract([...subcontract, {aspect:'',company:'',cost:0}])}>+ add row</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div>
+            <div style={{ fontSize: '20px', fontWeight: '600', color: '#1a2332' }}>Cost Model</div>
+            <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>Build and price your line items</div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button onClick={() => setShowNewItem(true)} style={btnStyle.secondary}>+ Line Item</button>
+            {activeItem && <button onClick={saveLineItem} style={btnStyle.primary}>{saving ? 'Saving...' : 'Save'}</button>}
+          </div>
         </div>
 
-        <div style={style.section}>
-          <div style={style.secHeader}><span>Labour</span><span style={{ color: '#94a3b8', fontSize: '12px' }}>{fmt(labTotal)}</span></div>
-          <table style={style.table}>
-            <thead><tr><th style={{...style.th,width:'28%'}}>Grade</th><th style={{...style.th,width:'20%'}}>Work type</th><th style={{...style.th,width:'13%',textAlign:'right'}}>Days</th><th style={{...style.th,width:'13%',textAlign:'right'}}>Hrs/day</th><th style={{...style.th,width:'13%',textAlign:'right'}}>Rate £</th><th style={{...style.th,width:'13%',textAlign:'right'}}>Total £</th></tr></thead>
-            <tbody>
-              {LABOUR_GRADES.map(g => (
-                <React.Fragment key={g.grade}>
-                  <tr><td colSpan="6" style={{...style.td, ...style.gradeHeader}}>{g.grade}</td></tr>
-                  {g.types.map(wt => {
-                    const idx = labour.findIndex(r => r.grade === g.grade && r.work_type === wt.t)
-                    const row = labour[idx] || { grade: g.grade, work_type: wt.t, days: 0, hours_per_day: 10, hourly_rate: wt.r }
-                    return (
-                      <tr key={wt.t}>
-                        <td style={{...style.td, paddingLeft:'16px', color:'#94a3b8', fontSize:'12px'}}>{wt.t}</td>
-                        <td style={style.td}></td>
-                        <td style={style.td}><input style={style.numInput} type="number" min="0" step="0.5" value={row.days || 0} onChange={e => { const a=[...labour]; if(idx>=0){a[idx]={...a[idx],days:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:e.target.value,hours_per_day:10,hourly_rate:wt.r})}; setLabour(a) }} /></td>
-                        <td style={style.td}><input style={style.numInput} type="number" min="1" value={row.hours_per_day || 10} onChange={e => { const a=[...labour]; if(idx>=0){a[idx]={...a[idx],hours_per_day:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:0,hours_per_day:e.target.value,hourly_rate:wt.r})}; setLabour(a) }} /></td>
-                        <td style={style.td}><input style={style.numInput} type="number" min="0" value={row.hourly_rate || wt.r} onChange={e => { const a=[...labour]; if(idx>=0){a[idx]={...a[idx],hourly_rate:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:0,hours_per_day:10,hourly_rate:e.target.value})}; setLabour(a) }} /></td>
-                        <td style={{...style.td, textAlign:'right', fontSize:'12px'}}>{fmt(n(row.days)*n(row.hours_per_day)*n(row.hourly_rate))}</td>
-                      </tr>
-                    )
-                  })}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {showNewItem && (
+          <div style={{ background: '#fff', borderRadius: '8px', border: '0.5px solid #e2e8f0', padding: '1rem', marginBottom: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <input value={newItemName} onChange={e => setNewItemName(e.target.value)} placeholder="Line item name" style={{ flex: 1, ...inpSel }} />
+            <select value={newItemDisc} onChange={e => setNewItemDisc(e.target.value)} style={inpSel}>
+              <option>Mechanical</option><option>Electrical</option><option>Construction</option>
+            </select>
+            <button onClick={createLineItem} style={btnStyle.primary}>Create</button>
+            <button onClick={() => setShowNewItem(false)} style={btnStyle.secondary}>Cancel</button>
+          </div>
+        )}
 
-        <div style={style.section}>
-          <div style={style.secHeader}><span>Tools / plant</span><span style={{ color: '#94a3b8', fontSize: '12px' }}>{fmt(toolTotal)}</span></div>
-          <table style={style.table}>
-            <thead><tr><th style={{...style.th,width:'30%'}}>Description</th><th style={{...style.th,width:'25%'}}>Supplier</th><th style={{...style.th,width:'18%',textAlign:'right'}}>Cost/week £</th><th style={{...style.th,width:'15%',textAlign:'right'}}>Weeks</th><th style={{...style.th,width:'10%',textAlign:'right'}}>Total £</th><th style={{...style.th,width:'2%'}}></th></tr></thead>
-            <tbody>
-              {tools.map((r, i) => (
-                <tr key={i}>
-                  <td style={style.td}><input style={style.input} value={r.description||''} onChange={e=>{const a=[...tools];a[i]={...a[i],description:e.target.value};setTools(a)}}/></td>
-                  <td style={style.td}><input style={style.input} value={r.supplier||''} onChange={e=>{const a=[...tools];a[i]={...a[i],supplier:e.target.value};setTools(a)}}/></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.cost_per_week||0} onChange={e=>{const a=[...tools];a[i]={...a[i],cost_per_week:e.target.value};setTools(a)}}/></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.num_weeks||1} onChange={e=>{const a=[...tools];a[i]={...a[i],num_weeks:e.target.value};setTools(a)}}/></td>
-                  <td style={{...style.td,textAlign:'right',fontSize:'12px'}}>{fmt(n(r.cost_per_week)*n(r.num_weeks))}</td>
-                  <td style={style.td}><button style={style.delBtn} onClick={()=>setTools(tools.filter((_,j)=>j!==i))}>✕</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button style={style.addBtn} onClick={()=>setTools([...tools,{description:'',supplier:'',cost_per_week:0,num_weeks:1}])}>+ add row</button>
-        </div>
+        {lineItems.length > 0 && (
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            {lineItems.map(item => (
+              <button key={item.id} onClick={() => loadLineItem(item)} style={{
+                padding: '0.4rem 1.2rem', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '500',
+                border: activeItem?.id === item.id ? `2px solid ${ECHO_BLUE}` : '0.5px solid #e2e8f0',
+                backgroundColor: activeItem?.id === item.id ? '#e8f6fd' : '#fff',
+                color: activeItem?.id === item.id ? ECHO_BLUE : '#374151'
+              }}>
+                {item.name}
+              </button>
+            ))}
+          </div>
+        )}
 
-        <div style={style.section}>
-          <div style={style.secHeader}><span>Subsistence</span><span style={{ color: '#94a3b8', fontSize: '12px' }}>{fmt(subsTotal)}</span></div>
-          <table style={style.table}>
-            <thead><tr><th style={{...style.th,width:'40%'}}>Type</th><th style={{...style.th,width:'20%',textAlign:'right'}}>Days</th><th style={{...style.th,width:'20%',textAlign:'right'}}>Daily rate £</th><th style={{...style.th,width:'18%',textAlign:'right'}}>Total £</th><th style={{...style.th,width:'2%'}}></th></tr></thead>
-            <tbody>
-              {subsistence.map((r, i) => (
-                <tr key={i}>
-                  <td style={style.td}><input style={style.input} value={r.type||''} onChange={e=>{const a=[...subsistence];a[i]={...a[i],type:e.target.value};setSubsistence(a)}}/></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.days||0} onChange={e=>{const a=[...subsistence];a[i]={...a[i],days:e.target.value};setSubsistence(a)}}/></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.daily_rate||30} onChange={e=>{const a=[...subsistence];a[i]={...a[i],daily_rate:e.target.value};setSubsistence(a)}}/></td>
-                  <td style={{...style.td,textAlign:'right',fontSize:'12px'}}>{fmt(n(r.days)*n(r.daily_rate))}</td>
-                  <td style={style.td}><button style={style.delBtn} onClick={()=>setSubsistence(subsistence.filter((_,j)=>j!==i))}>✕</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button style={style.addBtn} onClick={()=>setSubsistence([...subsistence,{type:'',days:0,daily_rate:30}])}>+ add row</button>
-        </div>
+        {!activeItem && lineItems.length === 0 && (
+          <div style={{ background: '#fff', borderRadius: '8px', border: '0.5px solid #e2e8f0', padding: '3rem', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+            No line items yet — click + Line Item to start
+          </div>
+        )}
 
-        <div style={style.section}>
-          <div style={style.secHeader}><span>Travel / vehicles</span><span style={{ color: '#94a3b8', fontSize: '12px' }}>{fmt(travTotal)}</span></div>
-          <table style={style.table}>
-            <thead><tr><th style={{...style.th,width:'28%'}}>Type</th><th style={{...style.th,width:'14%',textAlign:'right'}}>Trips</th><th style={{...style.th,width:'16%',textAlign:'right'}}>Distance (mi)</th><th style={{...style.th,width:'16%',textAlign:'right'}}>Rate £/mi</th><th style={{...style.th,width:'14%',textAlign:'right'}}>Total £</th><th style={{...style.th,width:'2%'}}></th></tr></thead>
-            <tbody>
-              {travel.map((r, i) => (
-                <tr key={i}>
-                  <td style={style.td}><input style={style.input} value={r.type||''} onChange={e=>{const a=[...travel];a[i]={...a[i],type:e.target.value};setTravel(a)}}/></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.trips||1} onChange={e=>{const a=[...travel];a[i]={...a[i],trips:e.target.value};setTravel(a)}}/></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.distance||0} onChange={e=>{const a=[...travel];a[i]={...a[i],distance:e.target.value};setTravel(a)}}/></td>
-                  <td style={style.td}><input style={style.numInput} type="number" value={r.mileage_rate||0.45} onChange={e=>{const a=[...travel];a[i]={...a[i],mileage_rate:e.target.value};setTravel(a)}}/></td>
-                  <td style={{...style.td,textAlign:'right',fontSize:'12px'}}>{fmt(n(r.trips)*n(r.distance)*n(r.mileage_rate)*2)}</td>
-                  <td style={style.td}><button style={style.delBtn} onClick={()=>setTravel(travel.filter((_,j)=>j!==i))}>✕</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button style={style.addBtn} onClick={()=>setTravel([...travel,{type:'',trips:1,distance:0,mileage_rate:0.45}])}>+ add row</button>
-        </div>
+        {activeItem && (<>
+          <div style={s.section}>
+            <div style={s.secHead}><span>Materials</span><span style={s.secTotal}>{fmt(matTotal)}</span></div>
+            <table style={s.table}>
+              <thead><tr><th style={{...s.th,width:'35%'}}>Description</th><th style={{...s.th,width:'25%'}}>Supplier</th><th style={{...s.th,width:'15%',textAlign:'right'}}>Cost £</th><th style={{...s.th,width:'12%',textAlign:'right'}}>Qty</th><th style={{...s.th,width:'12%',textAlign:'right'}}>Total £</th><th style={{...s.th,width:'1%'}}></th></tr></thead>
+              <tbody>
+                {materials.map((r, i) => (
+                  <tr key={i}>
+                    <td style={s.td}><input style={s.input} value={r.description||''} onChange={e=>{const a=[...materials];a[i]={...a[i],description:e.target.value};setMaterials(a)}}/></td>
+                    <td style={s.td}><input style={s.input} value={r.supplier||''} onChange={e=>{const a=[...materials];a[i]={...a[i],supplier:e.target.value};setMaterials(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.cost||0} onChange={e=>{const a=[...materials];a[i]={...a[i],cost:e.target.value};setMaterials(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.quantity||1} onChange={e=>{const a=[...materials];a[i]={...a[i],quantity:e.target.value};setMaterials(a)}}/></td>
+                    <td style={{...s.td,textAlign:'right',fontSize:'12px',color:'#374151'}}>{fmt(n(r.cost)*n(r.quantity))}</td>
+                    <td style={s.td}><button style={s.delBtn} onClick={()=>setMaterials(materials.filter((_,j)=>j!==i))}>✕</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button style={s.addBtn} onClick={()=>setMaterials([...materials,{description:'',supplier:'',cost:0,quantity:1}])}>+ add row</button>
+          </div>
 
-        <div style={style.section}>
-          <div style={style.secHeader}><span>Design engineering</span><span style={{ color: '#94a3b8', fontSize: '12px' }}>{fmt(desTotal)}</span></div>
-          <table style={style.table}>
-            <thead><tr><th style={{...style.th,width:'28%'}}>Grade</th><th style={{...style.th,width:'20%'}}>Work type</th><th style={{...style.th,width:'13%',textAlign:'right'}}>Days</th><th style={{...style.th,width:'13%',textAlign:'right'}}>Hrs/day</th><th style={{...style.th,width:'13%',textAlign:'right'}}>Rate £</th><th style={{...style.th,width:'13%',textAlign:'right'}}>Total £</th></tr></thead>
-            <tbody>
-              {DESIGN_GRADES.map(g => (
-                <React.Fragment key={g.grade}>
-                  <tr><td colSpan="6" style={{...style.td,...style.gradeHeader}}>{g.grade}</td></tr>
-                  {g.types.map(wt => {
-                    const idx = design.findIndex(r => r.grade === g.grade && r.work_type === wt.t)
-                    const row = design[idx] || { grade: g.grade, work_type: wt.t, days: 0, hours_per_day: 10, hourly_rate: wt.r }
-                    return (
-                      <tr key={wt.t}>
-                        <td style={{...style.td,paddingLeft:'16px',color:'#94a3b8',fontSize:'12px'}}>{wt.t}</td>
-                        <td style={style.td}></td>
-                        <td style={style.td}><input style={style.numInput} type="number" min="0" step="0.5" value={row.days||0} onChange={e=>{const a=[...design];if(idx>=0){a[idx]={...a[idx],days:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:e.target.value,hours_per_day:10,hourly_rate:wt.r})};setDesign(a)}}/></td>
-                        <td style={style.td}><input style={style.numInput} type="number" min="1" value={row.hours_per_day||10} onChange={e=>{const a=[...design];if(idx>=0){a[idx]={...a[idx],hours_per_day:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:0,hours_per_day:e.target.value,hourly_rate:wt.r})};setDesign(a)}}/></td>
-                        <td style={style.td}><input style={style.numInput} type="number" min="0" value={row.hourly_rate||wt.r} onChange={e=>{const a=[...design];if(idx>=0){a[idx]={...a[idx],hourly_rate:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:0,hours_per_day:10,hourly_rate:e.target.value})};setDesign(a)}}/></td>
-                        <td style={{...style.td,textAlign:'right',fontSize:'12px'}}>{fmt(n(row.days)*n(row.hours_per_day)*n(row.hourly_rate))}</td>
-                      </tr>
-                    )
-                  })}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          <div style={s.section}>
+            <div style={s.secHead}><span>Sub-contract</span><span style={s.secTotal}>{fmt(subTotal)}</span></div>
+            <table style={s.table}>
+              <thead><tr><th style={{...s.th,width:'40%'}}>Aspect of works</th><th style={{...s.th,width:'40%'}}>Company / quote ref</th><th style={{...s.th,width:'18%',textAlign:'right'}}>Cost £</th><th style={{...s.th,width:'2%'}}></th></tr></thead>
+              <tbody>
+                {subcontract.map((r, i) => (
+                  <tr key={i}>
+                    <td style={s.td}><input style={s.input} value={r.aspect||''} onChange={e=>{const a=[...subcontract];a[i]={...a[i],aspect:e.target.value};setSubcontract(a)}}/></td>
+                    <td style={s.td}><input style={s.input} value={r.company||''} onChange={e=>{const a=[...subcontract];a[i]={...a[i],company:e.target.value};setSubcontract(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.cost||0} onChange={e=>{const a=[...subcontract];a[i]={...a[i],cost:e.target.value};setSubcontract(a)}}/></td>
+                    <td style={s.td}><button style={s.delBtn} onClick={()=>setSubcontract(subcontract.filter((_,j)=>j!==i))}>✕</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button style={s.addBtn} onClick={()=>setSubcontract([...subcontract,{aspect:'',company:'',cost:0}])}>+ add row</button>
+          </div>
 
-        <div style={{ backgroundColor: '#1e293b', borderRadius: '8px', padding: '1.2rem', marginTop: '1rem' }}>
-          <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '12px' }}>Summary</div>
-          {[['Materials', matTotal], ['Labour', labTotal], ['Sub-contract', subTotal], ['Tools / plant', toolTotal], ['Subsistence', subsTotal], ['Travel / vehicles', travTotal], ['Design engineering', desTotal]].map(([label, val]) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #334155', fontSize: '13px' }}>
-              <span style={{ color: '#94a3b8' }}>{label}</span><span>{fmt(val)}</span>
+          <div style={s.section}>
+            <div style={s.secHead}><span>Labour</span><span style={s.secTotal}>{fmt(labTotal)}</span></div>
+            <table style={s.table}>
+              <thead><tr><th style={{...s.th,width:'28%'}}>Grade</th><th style={{...s.th,width:'20%'}}>Work type</th><th style={{...s.th,width:'13%',textAlign:'right'}}>Days</th><th style={{...s.th,width:'13%',textAlign:'right'}}>Hrs/day</th><th style={{...s.th,width:'13%',textAlign:'right'}}>Rate £</th><th style={{...s.th,width:'13%',textAlign:'right'}}>Total £</th></tr></thead>
+              <tbody>
+                {LABOUR_GRADES.map(g => (
+                  <React.Fragment key={g.grade}>
+                    <tr><td colSpan="6" style={s.gradeHead}>{g.grade}</td></tr>
+                    {g.types.map(wt => {
+                      const idx = labour.findIndex(r => r.grade === g.grade && r.work_type === wt.t)
+                      const row = labour[idx] || { grade: g.grade, work_type: wt.t, days: 0, hours_per_day: 10, hourly_rate: wt.r }
+                      return (
+                        <tr key={wt.t}>
+                          <td style={{...s.td,paddingLeft:'20px',color:'#64748b',fontSize:'12px'}}>{wt.t}</td>
+                          <td style={s.td}></td>
+                          <td style={s.td}><input style={s.numInput} type="number" min="0" step="0.5" value={row.days||0} onChange={e=>{const a=[...labour];if(idx>=0){a[idx]={...a[idx],days:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:e.target.value,hours_per_day:10,hourly_rate:wt.r})};setLabour(a)}}/></td>
+                          <td style={s.td}><input style={s.numInput} type="number" min="1" value={row.hours_per_day||10} onChange={e=>{const a=[...labour];if(idx>=0){a[idx]={...a[idx],hours_per_day:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:0,hours_per_day:e.target.value,hourly_rate:wt.r})};setLabour(a)}}/></td>
+                          <td style={s.td}><input style={s.numInput} type="number" min="0" value={row.hourly_rate||wt.r} onChange={e=>{const a=[...labour];if(idx>=0){a[idx]={...a[idx],hourly_rate:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:0,hours_per_day:10,hourly_rate:e.target.value})};setLabour(a)}}/></td>
+                          <td style={{...s.td,textAlign:'right',fontSize:'12px',color:'#374151'}}>{fmt(n(row.days)*n(row.hours_per_day)*n(row.hourly_rate))}</td>
+                        </tr>
+                      )
+                    })}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={s.section}>
+            <div style={s.secHead}><span>Tools / plant</span><span style={s.secTotal}>{fmt(toolTotal)}</span></div>
+            <table style={s.table}>
+              <thead><tr><th style={{...s.th,width:'30%'}}>Description</th><th style={{...s.th,width:'25%'}}>Supplier</th><th style={{...s.th,width:'18%',textAlign:'right'}}>Cost/week £</th><th style={{...s.th,width:'15%',textAlign:'right'}}>Weeks</th><th style={{...s.th,width:'10%',textAlign:'right'}}>Total £</th><th style={{...s.th,width:'2%'}}></th></tr></thead>
+              <tbody>
+                {tools.map((r, i) => (
+                  <tr key={i}>
+                    <td style={s.td}><input style={s.input} value={r.description||''} onChange={e=>{const a=[...tools];a[i]={...a[i],description:e.target.value};setTools(a)}}/></td>
+                    <td style={s.td}><input style={s.input} value={r.supplier||''} onChange={e=>{const a=[...tools];a[i]={...a[i],supplier:e.target.value};setTools(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.cost_per_week||0} onChange={e=>{const a=[...tools];a[i]={...a[i],cost_per_week:e.target.value};setTools(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.num_weeks||1} onChange={e=>{const a=[...tools];a[i]={...a[i],num_weeks:e.target.value};setTools(a)}}/></td>
+                    <td style={{...s.td,textAlign:'right',fontSize:'12px',color:'#374151'}}>{fmt(n(r.cost_per_week)*n(r.num_weeks))}</td>
+                    <td style={s.td}><button style={s.delBtn} onClick={()=>setTools(tools.filter((_,j)=>j!==i))}>✕</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button style={s.addBtn} onClick={()=>setTools([...tools,{description:'',supplier:'',cost_per_week:0,num_weeks:1}])}>+ add row</button>
+          </div>
+
+          <div style={s.section}>
+            <div style={s.secHead}><span>Subsistence</span><span style={s.secTotal}>{fmt(subsTotal)}</span></div>
+            <table style={s.table}>
+              <thead><tr><th style={{...s.th,width:'40%'}}>Type</th><th style={{...s.th,width:'20%',textAlign:'right'}}>Days</th><th style={{...s.th,width:'20%',textAlign:'right'}}>Daily rate £</th><th style={{...s.th,width:'18%',textAlign:'right'}}>Total £</th><th style={{...s.th,width:'2%'}}></th></tr></thead>
+              <tbody>
+                {subsistence.map((r, i) => (
+                  <tr key={i}>
+                    <td style={s.td}><input style={s.input} value={r.type||''} onChange={e=>{const a=[...subsistence];a[i]={...a[i],type:e.target.value};setSubsistence(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.days||0} onChange={e=>{const a=[...subsistence];a[i]={...a[i],days:e.target.value};setSubsistence(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.daily_rate||30} onChange={e=>{const a=[...subsistence];a[i]={...a[i],daily_rate:e.target.value};setSubsistence(a)}}/></td>
+                    <td style={{...s.td,textAlign:'right',fontSize:'12px',color:'#374151'}}>{fmt(n(r.days)*n(r.daily_rate))}</td>
+                    <td style={s.td}><button style={s.delBtn} onClick={()=>setSubsistence(subsistence.filter((_,j)=>j!==i))}>✕</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button style={s.addBtn} onClick={()=>setSubsistence([...subsistence,{type:'',days:0,daily_rate:30}])}>+ add row</button>
+          </div>
+
+          <div style={s.section}>
+            <div style={s.secHead}><span>Travel / vehicles</span><span style={s.secTotal}>{fmt(travTotal)}</span></div>
+            <table style={s.table}>
+              <thead><tr><th style={{...s.th,width:'28%'}}>Type</th><th style={{...s.th,width:'14%',textAlign:'right'}}>Trips</th><th style={{...s.th,width:'16%',textAlign:'right'}}>Distance (mi)</th><th style={{...s.th,width:'16%',textAlign:'right'}}>Rate £/mi</th><th style={{...s.th,width:'14%',textAlign:'right'}}>Total £</th><th style={{...s.th,width:'2%'}}></th></tr></thead>
+              <tbody>
+                {travel.map((r, i) => (
+                  <tr key={i}>
+                    <td style={s.td}><input style={s.input} value={r.type||''} onChange={e=>{const a=[...travel];a[i]={...a[i],type:e.target.value};setTravel(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.trips||1} onChange={e=>{const a=[...travel];a[i]={...a[i],trips:e.target.value};setTravel(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.distance||0} onChange={e=>{const a=[...travel];a[i]={...a[i],distance:e.target.value};setTravel(a)}}/></td>
+                    <td style={s.td}><input style={s.numInput} type="number" value={r.mileage_rate||0.45} onChange={e=>{const a=[...travel];a[i]={...a[i],mileage_rate:e.target.value};setTravel(a)}}/></td>
+                    <td style={{...s.td,textAlign:'right',fontSize:'12px',color:'#374151'}}>{fmt(n(r.trips)*n(r.distance)*n(r.mileage_rate)*2)}</td>
+                    <td style={s.td}><button style={s.delBtn} onClick={()=>setTravel(travel.filter((_,j)=>j!==i))}>✕</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button style={s.addBtn} onClick={()=>setTravel([...travel,{type:'',trips:1,distance:0,mileage_rate:0.45}])}>+ add row</button>
+          </div>
+
+          <div style={s.section}>
+            <div style={s.secHead}><span>Design engineering</span><span style={s.secTotal}>{fmt(desTotal)}</span></div>
+            <table style={s.table}>
+              <thead><tr><th style={{...s.th,width:'28%'}}>Grade</th><th style={{...s.th,width:'20%'}}>Work type</th><th style={{...s.th,width:'13%',textAlign:'right'}}>Days</th><th style={{...s.th,width:'13%',textAlign:'right'}}>Hrs/day</th><th style={{...s.th,width:'13%',textAlign:'right'}}>Rate £</th><th style={{...s.th,width:'13%',textAlign:'right'}}>Total £</th></tr></thead>
+              <tbody>
+                {DESIGN_GRADES.map(g => (
+                  <React.Fragment key={g.grade}>
+                    <tr><td colSpan="6" style={s.gradeHead}>{g.grade}</td></tr>
+                    {g.types.map(wt => {
+                      const idx = design.findIndex(r => r.grade === g.grade && r.work_type === wt.t)
+                      const row = design[idx] || { grade: g.grade, work_type: wt.t, days: 0, hours_per_day: 10, hourly_rate: wt.r }
+                      return (
+                        <tr key={wt.t}>
+                          <td style={{...s.td,paddingLeft:'20px',color:'#64748b',fontSize:'12px'}}>{wt.t}</td>
+                          <td style={s.td}></td>
+                          <td style={s.td}><input style={s.numInput} type="number" min="0" step="0.5" value={row.days||0} onChange={e=>{const a=[...design];if(idx>=0){a[idx]={...a[idx],days:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:e.target.value,hours_per_day:10,hourly_rate:wt.r})};setDesign(a)}}/></td>
+                          <td style={s.td}><input style={s.numInput} type="number" min="1" value={row.hours_per_day||10} onChange={e=>{const a=[...design];if(idx>=0){a[idx]={...a[idx],hours_per_day:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:0,hours_per_day:e.target.value,hourly_rate:wt.r})};setDesign(a)}}/></td>
+                          <td style={s.td}><input style={s.numInput} type="number" min="0" value={row.hourly_rate||wt.r} onChange={e=>{const a=[...design];if(idx>=0){a[idx]={...a[idx],hourly_rate:e.target.value}}else{a.push({grade:g.grade,work_type:wt.t,days:0,hours_per_day:10,hourly_rate:e.target.value})};setDesign(a)}}/></td>
+                          <td style={{...s.td,textAlign:'right',fontSize:'12px',color:'#374151'}}>{fmt(n(row.days)*n(row.hours_per_day)*n(row.hourly_rate))}</td>
+                        </tr>
+                      )
+                    })}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ background: '#fff', borderRadius: '8px', border: '0.5px solid #e2e8f0', padding: '1.5rem', marginTop: '1rem' }}>
+            <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '1rem', color: '#1a2332' }}>Summary</div>
+            {[['Materials', matTotal], ['Labour', labTotal], ['Sub-contract', subTotal], ['Tools / plant', toolTotal], ['Subsistence', subsTotal], ['Travel / vehicles', travTotal], ['Design engineering', desTotal]].map(([label, val]) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '0.5px solid #f1f5f9', fontSize: '13px' }}>
+                <span style={{ color: '#64748b' }}>{label}</span><span style={{ color: '#374151' }}>{fmt(val)}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #e2e8f0', fontWeight: '600', fontSize: '14px', color: '#1a2332' }}>
+              <span>Total cost</span><span>{fmt(totalCost)}</span>
             </div>
-          ))}
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #334155', fontWeight: 'bold' }}>
-            <span>Total cost</span><span>{fmt(totalCost)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '0.5px solid #f1f5f9', fontSize: '13px' }}>
+              <span style={{ color: '#64748b' }}>Total man hours</span><span style={{ color: '#374151' }}>{Math.round(labHours)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '0.5px solid #f1f5f9', fontSize: '13px' }}>
+              <span style={{ color: '#64748b' }}>Overheads %</span>
+              <input type="number" value={ovhPct} onChange={e => setOvhPct(e.target.value)} style={{ width: '70px', border: '0.5px solid #e2e8f0', borderRadius: '4px', padding: '3px 8px', textAlign: 'right', fontSize: '13px', color: '#1a2332' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '0.5px solid #f1f5f9', fontSize: '13px' }}>
+              <span style={{ color: '#64748b' }}>Gross profit %</span>
+              <input type="number" value={gpPct} onChange={e => setGpPct(e.target.value)} style={{ width: '70px', border: '0.5px solid #e2e8f0', borderRadius: '4px', padding: '3px 8px', textAlign: 'right', fontSize: '13px', color: '#1a2332' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', fontWeight: '700', fontSize: '18px', color: ECHO_BLUE }}>
+              <span>Selling price</span><span>{fmt(sellingPrice)}</span>
+            </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #334155', fontSize: '13px' }}>
-            <span style={{ color: '#94a3b8' }}>Total man hours</span><span>{Math.round(labHours)}</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #334155', fontSize: '13px' }}>
-            <span style={{ color: '#94a3b8' }}>Overheads %</span>
-            <input type="number" value={ovhPct} onChange={e => setOvhPct(e.target.value)} style={{ width: '60px', background: '#0f172a', border: '1px solid #334155', color: 'white', padding: '2px 6px', borderRadius: '4px', textAlign: 'right' }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #334155', fontSize: '13px' }}>
-            <span style={{ color: '#94a3b8' }}>Gross profit %</span>
-            <input type="number" value={gpPct} onChange={e => setGpPct(e.target.value)} style={{ width: '60px', background: '#0f172a', border: '1px solid #334155', color: 'white', padding: '2px 6px', borderRadius: '4px', textAlign: 'right' }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontWeight: 'bold', fontSize: '16px', color: '#38bdf8' }}>
-            <span>Selling price</span><span>{fmt(sellingPrice)}</span>
-          </div>
-        </div>
-      </>)}
+        </>)}
+      </div>
     </div>
   )
 }

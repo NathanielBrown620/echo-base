@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../supabase'
-import { Nav, pageStyle, cardStyle, tableStyle, btnStyle, badge, colors } from '../theme'
+import { Nav, pageStyle, cardStyle, btnStyle, badge, colors } from '../theme'
 
 function EnquiryDetail() {
   const [enquiry, setEnquiry] = useState(null)
@@ -58,6 +58,12 @@ function EnquiryDetail() {
               style={{ backgroundColor: '#e8f6fd', color: '#29ABE2', border: '0.5px solid #29ABE2', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
               Cost Model
             </button>
+            {enquiry.status === 'Awarded' && (
+              <button onClick={() => window.location.href = `/handover/${enquiry.id}`}
+                style={{ ...btnStyle.primary, backgroundColor: '#16a34a' }}>
+                🚀 Sales Handover
+              </button>
+            )}
             <button onClick={() => setEditing(!editing)} style={editing ? btnStyle.secondary : btnStyle.primary}>
               {editing ? 'Cancel' : 'Edit'}
             </button>
@@ -113,43 +119,3 @@ function EnquiryDetail() {
             <input style={inp} value={form.contact_name || ''} onChange={e => setForm({...form, contact_name: e.target.value})} />
 
             <label style={lbl}>Contact Email</label>
-            <input style={inp} value={form.contact_email || ''} onChange={e => setForm({...form, contact_email: e.target.value})} />
-
-            <label style={lbl}>Contact Phone</label>
-            <input style={inp} value={form.contact_phone || ''} onChange={e => setForm({...form, contact_phone: e.target.value})} />
-
-            <label style={lbl}>Description of Works</label>
-            <textarea style={{...inp, height: '80px', resize: 'vertical'}} value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} />
-
-            <label style={lbl}>Status</label>
-            <select style={inp} value={form.status || 'Enquiry'} onChange={e => setForm({...form, status: e.target.value})}>
-              <option>Enquiry</option>
-              <option>Estimating</option>
-              <option>Quoted</option>
-              <option>Awarded</option>
-              <option>Lost</option>
-              <option>On Hold</option>
-            </select>
-
-            <label style={lbl}>Assigned To</label>
-            <input style={inp} value={form.assigned_to || ''} onChange={e => setForm({...form, assigned_to: e.target.value})} />
-
-            <label style={lbl}>Date Received</label>
-            <input style={inp} type="date" value={form.date_received || ''} onChange={e => setForm({...form, date_received: e.target.value})} />
-
-            <label style={lbl}>Quote Due Date</label>
-            <input style={inp} type="date" value={form.quote_due_date || ''} onChange={e => setForm({...form, quote_due_date: e.target.value})} />
-
-            <label style={lbl}>Key Assumptions</label>
-            <textarea style={{...inp, height: '80px', resize: 'vertical'}} value={form.assumptions || ''} onChange={e => setForm({...form, assumptions: e.target.value})} />
-
-            <label style={lbl}>Exclusions</label>
-            <textarea style={{...inp, height: '80px', resize: 'vertical'}} value={form.exclusions || ''} onChange={e => setForm({...form, exclusions: e.target.value})} />
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default EnquiryDetail

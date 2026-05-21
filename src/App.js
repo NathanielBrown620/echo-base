@@ -10,6 +10,7 @@ import EnquiryDetail from './pages/EnquiryDetail'
 import CostSheet from './pages/CostSheet'
 import Login from './pages/Login'
 import Users from './pages/Users'
+import SalesHandover from './pages/SalesHandover'
 import { getUser, canAccess } from './auth'
 
 function ProtectedRoute({ children, section }) {
@@ -53,6 +54,7 @@ function App() {
         <Route path="/enquiry/:id" element={<ProtectedRoute section="enquiries"><EnquiryDetail /></ProtectedRoute>} />
         <Route path="/cost/:id" element={<ProtectedRoute section="costmodel"><CostSheet /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute section="admin"><Users /></ProtectedRoute>} />
+        <Route path="/handover/:id" element={<ProtectedRoute section="enquiries"><SalesHandover /></ProtectedRoute>} />
       </Routes>
     </Router>
   )

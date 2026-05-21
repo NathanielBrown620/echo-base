@@ -55,7 +55,12 @@ function ProjectDetail() {
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <span style={{ backgroundColor: ragColour(project.rag_status), borderRadius: '50%', display: 'inline-block', width: '12px', height: '12px' }}></span>
             <span style={badge(project.stage)}>{project.stage}</span>
-            <button onClick={() => window.location.href = `/project/${project.id}/chat`} style={{ ...btnStyle.primary, marginLeft: '0.5rem' }}>
+            <button onClick={() => window.location.href = `/project/${project.id}/tasks`}
+              style={{ ...btnStyle.secondary, marginLeft: '0.5rem' }}>
+              ✓ Tasks
+            </button>
+            <button onClick={() => window.location.href = `/project/${project.id}/chat`}
+              style={{ ...btnStyle.primary, marginLeft: '0.5rem' }}>
               💬 Project Chat
             </button>
           </div>
